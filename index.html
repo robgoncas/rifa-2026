@@ -713,7 +713,6 @@
     
 
     </div>
-    <span class="hint-edit">📷 Hacé clic en cada cuadro para agregar una foto del premio</span>
   </div>
 
   <!-- INFO SORTEO -->
@@ -743,17 +742,26 @@
     </div>
   </div>
 
-  <!-- TABLA DE 100 NÚMEROS -->
-  <div class="numeros-seccion">
-    <div class="numeros-titulo">TABLA DE NÚMEROS</div>
-    <div class="tabla-wrapper">
-      <table class="tabla-numeros" id="tablaNumeros"></table>
-      <div class="leyenda">
-        <div class="ley-item"><div class="ley-box libre"></div><span>Disponible</span></div>
-        <div class="ley-item"><div class="ley-box vendido-box"></div><span>Vendido (clic en número)</span></div>
+<!-- TABLA DE 100 NÚMEROS -->
+<div class="numeros-seccion">
+  <div class="numeros-titulo">TABLA DE NÚMEROS</div>
+
+  <div class="tabla-wrapper">
+    <table class="tabla-numeros" id="tablaNumeros"></table>
+
+    <div class="leyenda">
+      <div class="ley-item">
+        <div class="ley-box libre"></div>
+        <span>Disponible</span>
+      </div>
+
+      <div class="ley-item">
+        <div class="ley-box vendido-box"></div>
+        <span>Vendido (clic en número)</span>
       </div>
     </div>
   </div>
+</div>
 
   <!-- BOTÓN IMPRIMIR -->
 
@@ -767,58 +775,78 @@
 </div><!-- fin .pagina -->
 
 <script>
-/* Estrellas de fondo */
-const wrap = document.getElementById('bgEstrellas');
-const chars = ['★','✦','✸','•','◆'];
-for(let i=0;i<40;i++){
-  const s = document.createElement('div');
-  s.className='estrella-bg';
-  s.textContent = chars[i%chars.length];
-  s.style.left = Math.random()*100+'%';
-  s.style.top  = Math.random()*100+'%';
-  s.style.fontSize = (10+Math.random()*20)+'px';
-  s.style.animationDelay = (Math.random()*6)+'s';
-  s.style.animationDuration = (5+Math.random()*8)+'s';
-  wrap.appendChild(s);
+// 🔹 ARREGLO BASE (TU CONTROL)
+let ventas = [
+  { numero: 8, nombre: "Inés C." },
+  { numero: 18, nombre: "Inés C." }
+];
+
+// 🔹 BUSCAR SI UN NÚMERO ESTÁ VENDIDO
+function obtenerVenta(numero) {
+  return ventas.find(v => v.numero === numero);
 }
 
-/* Generar tabla 10×10 */
+// 🔹 GENERAR TABLA
 const tabla = document.getElementById('tablaNumeros');
 let num = 1;
-for(let fila=0;fila<10;fila++){
+
+for (let fila = 0; fila < 10; fila++) {
   const tr = document.createElement('tr');
-  for(let col=0;col<10;col++){
+
+  for (let col = 0; col < 10; col++) {
     const td = document.createElement('td');
-    td.className='celda-num';
-    td.id='n'+num;
-    const n = num;
-    td.innerHTML=`
-      <span class="num-label" title="Clic para marcar vendido" style="cursor:pointer">${String(n).padStart(2,'0')}</span>
-      <input class="num-linea" type="text" placeholder="nombre" maxlength="14">
+    td.className = 'celda-num';
+    td.id = 'n' + num;
+
+    const venta = obtenerVenta(num);
+
+    td.innerHTML = `
+      <span class="num-label" title="Clic para marcar vendido" style="cursor:pointer">
+        ${String(num).padStart(2,'0')}
+      </span>
+      <input class="num-linea" type="text" placeholder="nombre" maxlength="14"
+        value="${venta ? venta.nombre : ''}">
     `;
-    td.querySelector('.num-label').addEventListener('click',()=>{
-      td.classList.toggle('vendido');
+
+    // 🔹 SI YA ESTÁ VENDIDO
+    if (venta) {
+      td.classList.add('vendido');
+    }
+
+    // 🔹 EVENTO CLICK
+    td.querySelector('.num-label').addEventListener('click', () => {
+      const input = td.querySelector('.num-linea');
+      const nombre = input.value.trim();
+
+      // SI NO ESTÁ VENDIDO → VENDER
+      if (!td.classList.contains('vendido')) {
+        if (!nombre) {
+          alert("Ingresa un nombre primero");
+          return;
+        }
+
+        td.classList.add('vendido');
+
+        // evitar duplicados
+        if (!ventas.some(v => v.numero === num)) {
+          ventas.push({ numero: num, nombre });
+        }
+
+      } else {
+        // SI YA ESTÁ VENDIDO → LIBERAR
+        td.classList.remove('vendido');
+
+        ventas = ventas.filter(v => v.numero !== num);
+      }
+
+      console.log("Ventas actuales:", ventas);
     });
+
     tr.appendChild(td);
     num++;
   }
-  tabla.appendChild(tr);
-}
 
-/* Cargar fotos */
-function cargarFoto(input, slotId){
-  const file = input.files[0];
-  if(!file) return;
-  const slot = document.getElementById(slotId);
-  const reader = new FileReader();
-  reader.onload = e => {
-    const badge = slot.querySelector('.foto-badge').outerHTML;
-    slot.innerHTML = badge + `<img src="${e.target.result}" alt="Premio">
-      <div class="foto-overlay"><span>Cambiar foto</span></div>`;
-    slot.classList.add('tiene-foto');
-    slot.onclick = () => input.click();
-  };
-  reader.readAsDataURL(file);
+  tabla.appendChild(tr);
 }
 </script>
 </body>
